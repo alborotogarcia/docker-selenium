@@ -2,7 +2,7 @@
 # NOTE: DO *NOT* EDIT THIS FILE.  IT IS GENERATED.
 # PLEASE UPDATE Dockerfile.txt INSTEAD OF THIS FILE
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-FROM selenium/base:4.1.0-20211123
+FROM alvarogg777/base:4.1.0-20211126
 LABEL authors=SeleniumHQ
 
 USER root
@@ -28,7 +28,6 @@ ENV LANG ${LANGUAGE}
 # Layer size: small: ~9 MB MB (with --no-install-recommends)
 RUN apt-get -qqy update \
   && apt-get -qqy --no-install-recommends install \
-    language-pack-en \
     tzdata \
     locales \
   && locale-gen ${LANGUAGE} \
@@ -84,7 +83,6 @@ RUN apt-get -qqy update \
     fonts-ipafont-gothic \
     fonts-wqy-zenhei \
     fonts-tlwg-loma-otf \
-    ttf-ubuntu-font-family \
   && rm -rf /var/lib/apt/lists/* \
   && apt-get -qyy clean
 
@@ -142,9 +140,9 @@ RUN mkdir -p ${HOME}/.vnc \
 #==========
 # Relaxing permissions for OpenShift and other non-sudo environments
 #==========
-RUN sudo chmod -R 777 ${HOME} \
-  && sudo chgrp -R 0 ${HOME} \
-  && sudo chmod -R g=u ${HOME}
+#RUN sudo chmod -R 777 ${HOME} \
+#  && sudo chgrp -R 0 ${HOME} \
+#  && sudo chmod -R g=u ${HOME}
 
 #==============================
 # Scripts to run fluxbox, x11vnc and noVNC
@@ -187,7 +185,8 @@ ENV SE_NODE_OVERRIDE_MAX_SESSIONS false
 ENV DBUS_SESSION_BUS_ADDRESS=/dev/null
 
 # Creating base directory for Xvfb
-RUN  sudo mkdir -p /tmp/.X11-unix && sudo chmod 1777 /tmp/.X11-unix
+# RUN  sudo mkdir -p /tmp/.X11-unix && sudo chmod 1777 /tmp/.X11-unix
+RUN  mkdir -p /tmp/.X11-unix
 
 # Copying configuration script generator
 COPY generate_config /opt/bin/generate_config
