@@ -1,5 +1,5 @@
 NAME := $(or $(NAME),$(NAME),alvarogg777)
-CURRENT_DATE := $(shell date '+%Y%m%d')
+CURRENT_DATE := 20211130 # $(shell date '+%Y%m%d') # 20211203
 BUILD_DATE := $(or $(BUILD_DATE),$(BUILD_DATE),$(CURRENT_DATE))
 VERSION := $(or $(VERSION),$(VERSION),4.1.0)
 TAG_VERSION := $(VERSION)-$(BUILD_DATE)
