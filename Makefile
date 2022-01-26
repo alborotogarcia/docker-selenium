@@ -1,12 +1,13 @@
-NAME := $(or $(NAME),$(NAME),selenium)
-CURRENT_DATE := $(shell date '+%Y%m%d')
+NAME := $(or $(NAME),$(NAME),alvarogg777)
+CURRENT_DATE := $(shell date '+%Y%m%d') # 20211203
 BUILD_DATE := $(or $(BUILD_DATE),$(BUILD_DATE),$(CURRENT_DATE))
-VERSION := $(or $(VERSION),$(VERSION),4.1.0)
+VERSION := $(or $(VERSION),$(VERSION),4.1.1)
 TAG_VERSION := $(VERSION)-$(BUILD_DATE)
 NAMESPACE := $(or $(NAMESPACE),$(NAMESPACE),$(NAME))
 AUTHORS := $(or $(AUTHORS),$(AUTHORS),SeleniumHQ)
 PUSH_IMAGE := $(or $(PUSH_IMAGE),$(PUSH_IMAGE),false)
-BUILD_ARGS := $(BUILD_ARGS)
+DEFAULT_BUILD_ARGS := --platform linux/arm64,linux/amd64
+BUILD_ARGS := $(or $(BUILD_ARGS),$(BUILD_ARGS),$(DEFAULT_BUILD_ARGS))
 MAJOR := $(word 1,$(subst ., ,$(TAG_VERSION)))
 MINOR := $(word 2,$(subst ., ,$(TAG_VERSION)))
 MAJOR_MINOR_PATCH := $(word 1,$(subst -, ,$(TAG_VERSION)))
@@ -18,15 +19,10 @@ all: hub \
 	sessions \
 	sessionqueue \
 	event_bus \
-	chrome \
-	edge \
+	chromium \
 	firefox \
-	docker \
-	standalone_chrome \
-	standalone_edge \
-	standalone_firefox \
-	standalone_docker \
-	video
+	standalone_chromium \
+	standalone_firefox
 
 generate_all:	\
 	generate_hub \
@@ -36,128 +32,83 @@ generate_all:	\
 	generate_sessionqueue \
 	generate_event_bus \
 	generate_node_base \
-	generate_chrome \
-	generate_edge \
+	generate_chromium \
 	generate_firefox \
-	generate_docker \
 	generate_standalone_firefox \
-	generate_standalone_chrome \
-	generate_standalone_edge \
-	generate_standalone_docker
+	generate_standalone_chromium
 
 build: all
 
 ci: build test
 
 base:
-	cd ./Base && docker build $(BUILD_ARGS) -t $(NAME)/base:$(TAG_VERSION) .
+	cd ./Base && docker buildx build --push $(BUILD_ARGS) -t $(NAME)/base:$(TAG_VERSION) .
 
 generate_hub:
 	cd ./Hub && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
 
 hub: base generate_hub
-	cd ./Hub && docker build $(BUILD_ARGS) -t $(NAME)/hub:$(TAG_VERSION) .
+	cd ./Hub && docker buildx build --push $(BUILD_ARGS) -t $(NAME)/hub:$(TAG_VERSION) .
 
 generate_distributor:
 	cd ./Distributor && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
 
 distributor: base generate_distributor
-	cd ./Distributor && docker build $(BUILD_ARGS) -t $(NAME)/distributor:$(TAG_VERSION) .
+	cd ./Distributor && docker buildx build --push $(BUILD_ARGS) -t $(NAME)/distributor:$(TAG_VERSION) .
 
 generate_router:
 	cd ./Router && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
 
 router: base generate_router
-	cd ./Router && docker build $(BUILD_ARGS) -t $(NAME)/router:$(TAG_VERSION) .
+	cd ./Router && docker buildx build --push $(BUILD_ARGS) -t $(NAME)/router:$(TAG_VERSION) .
 
 generate_sessions:
 	cd ./Sessions && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
 
 sessions: base generate_sessions
-	cd ./Sessions && docker build $(BUILD_ARGS) -t $(NAME)/sessions:$(TAG_VERSION) .
+	cd ./Sessions && docker buildx build --push $(BUILD_ARGS) -t $(NAME)/sessions:$(TAG_VERSION) .
 
 generate_sessionqueue:
 	cd ./SessionQueue && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
 
 sessionqueue: base generate_sessionqueue
-	cd ./SessionQueue && docker build $(BUILD_ARGS) -t $(NAME)/session-queue:$(TAG_VERSION) .
+	cd ./SessionQueue && docker buildx build --push $(BUILD_ARGS) -t $(NAME)/session-queue:$(TAG_VERSION) .
 
 generate_event_bus:
 	cd ./EventBus && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
 
 event_bus: base generate_event_bus
-	cd ./EventBus && docker build $(BUILD_ARGS) -t $(NAME)/event-bus:$(TAG_VERSION) .
+	cd ./EventBus && docker buildx build --push $(BUILD_ARGS) -t $(NAME)/event-bus:$(TAG_VERSION) .
 
 generate_node_base:
 	cd ./NodeBase && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
 
 node_base: base generate_node_base
-	cd ./NodeBase && docker build $(BUILD_ARGS) -t $(NAME)/node-base:$(TAG_VERSION) .
+	cd ./NodeBase && docker buildx build --push $(BUILD_ARGS) -t $(NAME)/node-base:$(TAG_VERSION) .
 
-generate_chrome:
-	cd ./NodeChrome && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
+generate_chromium:
+	cd ./NodeChromium && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
 
-chrome: node_base generate_chrome
-	cd ./NodeChrome && docker build $(BUILD_ARGS) -t $(NAME)/node-chrome:$(TAG_VERSION) .
-
-generate_edge:
-	cd ./NodeEdge && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
-
-edge: node_base generate_edge
-	cd ./NodeEdge && docker build $(BUILD_ARGS) -t $(NAME)/node-edge:$(TAG_VERSION) .
+chromium: node_base generate_chromium
+	cd ./NodeChromium && docker buildx build --push $(BUILD_ARGS) -t $(NAME)/node-chromium:$(TAG_VERSION) .
 
 generate_firefox:
 	cd ./NodeFirefox && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
 
 firefox: node_base generate_firefox
-	cd ./NodeFirefox && docker build $(BUILD_ARGS) -t $(NAME)/node-firefox:$(TAG_VERSION) .
-
-generate_docker:
-	cd ./NodeDocker && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
-
-docker: base generate_docker
-	cd ./NodeDocker && docker build $(BUILD_ARGS) -t $(NAME)/node-docker:$(TAG_VERSION) .
-
-generate_standalone_docker:
-	cd ./StandaloneDocker && ./generate.sh $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
-
-standalone_docker: base generate_standalone_docker
-	cd ./StandaloneDocker && docker build $(BUILD_ARGS) -t $(NAME)/standalone-docker:$(TAG_VERSION) .
+	cd ./NodeFirefox && docker buildx build --push $(BUILD_ARGS) -t $(NAME)/node-firefox:$(TAG_VERSION) .
 
 generate_standalone_firefox:
 	cd ./Standalone && ./generate.sh StandaloneFirefox node-firefox $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
 
 standalone_firefox: firefox generate_standalone_firefox
-	cd ./StandaloneFirefox && docker build $(BUILD_ARGS) -t $(NAME)/standalone-firefox:$(TAG_VERSION) .
+	cd ./StandaloneFirefox && docker buildx build --push $(BUILD_ARGS) -t $(NAME)/standalone-firefox:$(TAG_VERSION) .
 
-generate_standalone_chrome:
-	cd ./Standalone && ./generate.sh StandaloneChrome node-chrome $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
+generate_standalone_chromium:
+	cd ./Standalone && ./generate.sh StandaloneChromium node-chromium $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
 
-standalone_chrome: chrome generate_standalone_chrome
-	cd ./StandaloneChrome && docker build $(BUILD_ARGS) -t $(NAME)/standalone-chrome:$(TAG_VERSION) .
-
-generate_standalone_edge:
-	cd ./Standalone && ./generate.sh StandaloneEdge node-edge $(TAG_VERSION) $(NAMESPACE) $(AUTHORS)
-
-standalone_edge: edge generate_standalone_edge
-	cd ./StandaloneEdge && docker build $(BUILD_ARGS) -t $(NAME)/standalone-edge:$(TAG_VERSION) .
-
-video:
-	cd ./Video && docker build $(BUILD_ARGS) -t $(NAME)/video:$(FFMPEG_TAG_VERSION)-$(BUILD_DATE) .
-
-
-# https://github.com/SeleniumHQ/docker-selenium/issues/992
-# Additional tags for browser images
-tag_and_push_browser_images: tag_and_push_chrome_images tag_and_push_firefox_images tag_and_push_edge_images
-
-tag_and_push_chrome_images:
-	./tag_and_push_browser_images.sh $(VERSION) $(BUILD_DATE) $(NAMESPACE) $(PUSH_IMAGE) chrome
-
-tag_and_push_edge_images:
-	./tag_and_push_browser_images.sh $(VERSION) $(BUILD_DATE) $(NAMESPACE) $(PUSH_IMAGE) edge
-
-tag_and_push_firefox_images:
-	./tag_and_push_browser_images.sh $(VERSION) $(BUILD_DATE) $(NAMESPACE) $(PUSH_IMAGE) firefox
+standalone_chromium: chromium generate_standalone_chromium
+	cd ./StandaloneChromium && docker buildx build --push $(BUILD_ARGS) -t $(NAME)/standalone-chromium:$(TAG_VERSION) .
 
 tag_latest:
 	docker tag $(NAME)/base:$(TAG_VERSION) $(NAME)/base:latest
@@ -168,15 +119,10 @@ tag_latest:
 	docker tag $(NAME)/session-queue:$(TAG_VERSION) $(NAME)/session-queue:latest
 	docker tag $(NAME)/event-bus:$(TAG_VERSION) $(NAME)/event-bus:latest
 	docker tag $(NAME)/node-base:$(TAG_VERSION) $(NAME)/node-base:latest
-	docker tag $(NAME)/node-chrome:$(TAG_VERSION) $(NAME)/node-chrome:latest
-	docker tag $(NAME)/node-edge:$(TAG_VERSION) $(NAME)/node-edge:latest
+	docker tag $(NAME)/node-chromium:$(TAG_VERSION) $(NAME)/node-chromium:latest
 	docker tag $(NAME)/node-firefox:$(TAG_VERSION) $(NAME)/node-firefox:latest
-	docker tag $(NAME)/node-docker:$(TAG_VERSION) $(NAME)/node-docker:latest
-	docker tag $(NAME)/standalone-chrome:$(TAG_VERSION) $(NAME)/standalone-chrome:latest
-	docker tag $(NAME)/standalone-edge:$(TAG_VERSION) $(NAME)/standalone-edge:latest
+	docker tag $(NAME)/standalone-chromium:$(TAG_VERSION) $(NAME)/standalone-chromium:latest
 	docker tag $(NAME)/standalone-firefox:$(TAG_VERSION) $(NAME)/standalone-firefox:latest
-	docker tag $(NAME)/standalone-docker:$(TAG_VERSION) $(NAME)/standalone-docker:latest
-	docker tag $(NAME)/video:$(FFMPEG_TAG_VERSION)-$(BUILD_DATE) $(NAME)/video:latest
 
 release_latest:
 	docker push $(NAME)/base:latest
@@ -333,25 +279,16 @@ release: tag_major_minor
 	docker push $(NAME)/video:latest
 # video: this should be moved to release_latest when Selenium 4 is released
 
-test: test_chrome \
+test: test_chromium \
  test_firefox \
- test_chrome_standalone \
- test_firefox_standalone \
- test_edge \
- test_edge_standalone
+ test_chromium_standalone \
+ test_firefox_standalone
 
+test_chromium:
+	VERSION=$(TAG_VERSION) NAMESPACE=$(NAMESPACE) ./tests/bootstrap.sh NodeChromium
 
-test_chrome:
-	VERSION=$(TAG_VERSION) NAMESPACE=$(NAMESPACE) ./tests/bootstrap.sh NodeChrome
-
-test_chrome_standalone:
-	VERSION=$(TAG_VERSION) NAMESPACE=$(NAMESPACE) ./tests/bootstrap.sh StandaloneChrome
-
-test_edge:
-	VERSION=$(TAG_VERSION) NAMESPACE=$(NAMESPACE) ./tests/bootstrap.sh NodeEdge
-
-test_edge_standalone:
-	VERSION=$(TAG_VERSION) NAMESPACE=$(NAMESPACE) ./tests/bootstrap.sh StandaloneEdge
+test_chromium_standalone:
+	VERSION=$(TAG_VERSION) NAMESPACE=$(NAMESPACE) ./tests/bootstrap.sh StandaloneChromium
 
 test_firefox:
 	VERSION=$(TAG_VERSION) NAMESPACE=$(NAMESPACE) ./tests/bootstrap.sh NodeFirefox
@@ -393,10 +330,8 @@ test_video: video hub chrome firefox edge
 	base \
 	build \
 	ci \
-	chrome \
-	edge \
+	chromium \
 	firefox \
-	docker \
 	generate_all \
 	generate_hub \
 	generate_distributor \
@@ -405,14 +340,10 @@ test_video: video hub chrome firefox edge
 	generate_sessionqueue \
 	generate_event_bus \
 	generate_node_base \
-	generate_chrome \
-	generate_edge \
+	generate_chromium \
 	generate_firefox \
-	generate_docker \
-	generate_standalone_chrome \
-	generate_standalone_edge \
+	generate_standalone_chromium \
 	generate_standalone_firefox \
-	generate_standalone_docker \
 	hub \
 	distributor \
 	router \
@@ -421,11 +352,9 @@ test_video: video hub chrome firefox edge
 	event_bus \
 	node_base \
 	release \
-	standalone_chrome \
-	standalone_edge \
+	standalone_chromium \
 	standalone_firefox \
-	standalone_docker \
 	tag_latest \
 	tag_and_push_browser_images \
-	test \
-	video
+	test
+
