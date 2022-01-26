@@ -37,4 +37,4 @@ RUN apt-get update -qqy \
 USER 1200
 
 # COPY config.toml /opt/selenium/config.toml
-RUN echo "chromium" >> /opt/selenium/browser_name
+RUN echo "chrome" >> /opt/selenium/browser_name
