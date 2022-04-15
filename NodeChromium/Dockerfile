@@ -1,0 +1,40 @@
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# NOTE: DO *NOT* EDIT THIS FILE.  IT IS GENERATED.
+# PLEASE UPDATE Dockerfile.txt INSTEAD OF THIS FILE
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+FROM alvarogg777/node-base:4.1.2-20220207
+LABEL authors=SeleniumHQ
+
+USER root
+
+#============================================
+# Chromium
+# Obtain Chromium version from: https://packages.debian.org/search?keywords=chromium
+#============================================
+
+RUN apt-get -qqy update && apt-get install -y locales; locale-gen en_US.UTF-8 && DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+ENV LANGUAGE=en_US.UTF-8 LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+
+#RUN echo "deb http://http.us.debian.org/debian/ testing non-free contrib main" >> /etc/apt/sources.list \
+#  && apt-get update -qqy \
+RUN apt-get update -qqy \
+  && apt-get -qqy install chromium=98.0.4758.80-1 \
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+
+#=================================
+# Chromium Launch Script Wrapper
+#=================================
+COPY wrap_chromium_binary /opt/bin/wrap_chromium_binary
+RUN /opt/bin/wrap_chromium_binary
+
+#============================================
+# Chrome webdriver
+#============================================
+RUN apt-get update -qqy \
+  && apt-get -qqy install chromium-driver \
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/* ; ln -s /usr/bin/chromium /usr/bin/chrome ; 
+
+USER 1200
+
+# COPY config.toml /opt/selenium/config.toml
+RUN echo "chrome" >> /opt/selenium/browser_name
