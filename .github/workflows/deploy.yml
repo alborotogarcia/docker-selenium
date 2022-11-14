@@ -80,7 +80,7 @@ jobs:
           git config --local user.name "Selenium CI Bot"
           git commit -m "Update tag in docs and files [skip ci]" -a
       - name: Push changes
-        uses: ad-m/github-push-action@a3fd843e49cd58d296bdd2431c4853569a1b900f # master
+        uses: ad-m/github-push-action@552c074ed701137ebd2bf098e70c394ca293e87f # master
         with:
           github_token: ${{ secrets.SELENIUM_CI_TOKEN }}
           branch: trunk
